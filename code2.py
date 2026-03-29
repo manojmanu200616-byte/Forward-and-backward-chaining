@@ -1,53 +1,30 @@
-# ---------- KNOWLEDGE BASE ----------
-facts = {"A", "B"}
-
-rules = [
-    ({"A", "B"}, "C"),
-    ({"C"}, "D")
-]
-
-# ---------- FORWARD CHAINING ----------
 def forward_chaining(facts, rules):
-    facts = set(facts)
+    inferred = set(facts)
     changed = True
     while changed:
         changed = False
-        for cond, res in rules:
-            if cond.issubset(facts) and res not in facts:
-                facts.add(res)
+        for premise, conclusion in rules:
+            if set(premise).issubset(inferred) and conclusion not in inferred:
+                inferred.add(conclusion)
                 changed = True
-    return facts
+    return inferred
 
-
-# ---------- BACKWARD CHAINING ----------
-rule_dict = {
-    "C": ["A", "B"],
-    "D": ["C"]
-}
-
-def backward_chaining(goal, facts):
+def backward_chaining(goal, facts, rules):
     if goal in facts:
         return True
-    if goal not in rule_dict:
-        return False
-    for g in rule_dict[goal]:
-        if not backward_chaining(g, facts):
-            return False
-    return True
+    for premise, conclusion in rules:
+        if conclusion == goal:
+            return all(backward_chaining(p, facts, rules) for p in premise)
+    return False
 
+def resolution(clause1, clause2):
+    return list(set(clause1) | set(clause2))
 
-# ---------- RESOLUTION ----------
-def resolve(c1, c2):
-    for lit in c1:
-        if "-" + lit in c2:
-            return (c1 | c2) - {lit, "-" + lit}
-    return None
+def main():
+    facts = ['A']
+    rules = [(['A'], 'B'), (['B'], 'C')]
+    print("Forward:", forward_chaining(facts, rules))
+    print("Backward:", backward_chaining('C', facts, rules))
+    print("Resolution:", resolution(['A'], ['~A','B']))
 
-
-# ---------- RUN ----------
-print("Forward Chaining Result:", forward_chaining(facts, rules))
-print("Backward Chaining for D:", backward_chaining("D", facts))
-
-clause1 = {"A", "B"}
-clause2 = {"-A"}
-print("Resolution Result:", resolve(clause1, clause2))
+main()
